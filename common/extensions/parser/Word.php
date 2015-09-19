@@ -1,5 +1,7 @@
 <?php
 
+namespace common\extensions\parser;
+
 class Word
 {
     const TYPE_ARTICLE = 0;
@@ -10,7 +12,7 @@ class Word
     const TYPE_COLOR = 5;
     const TYPE_STICK_ORIENTATION = 6;
     
-    protected $_basic;
+    protected $_data;
     protected $_original;
     
     protected $_type;
@@ -22,16 +24,21 @@ class Word
     {
         $word = new static;
         
-        $word->_basic = static::clean($data);
+        $word->_data = trim(strtolower($data));
         $word->_original = trim($data);
         
-        if ($word->_basic === null) {
+        if ($word->_data === null) {
             $word->_empty = true;
         } else {
             $word->test();
         }
         
         return $word;
+    }
+    
+    public static function hasJunk($word)
+    {
+        return preg_match('/[[:punct:]]/', static::check($word));
     }
     
     public static function hasArticle($word)
@@ -46,7 +53,7 @@ class Word
     
     public static function hasSizePart($word)
     {
-        return preg_match('/euro|pant|jr|sr|yth|s|m|l|xl|xxl|\d{0,3}\b/ig', static::check($word));
+        return preg_match('/\b(?:euro|pant|jr|sr|yth|s|m|xl|xxl|\d{1,3})\b/i', static::check($word));
     }
     
     public static function hasColor($word)
@@ -61,16 +68,29 @@ class Word
     
     public function countUp(array &$count)
     {
-        if (!isset($count[$this->_basic])) {
-            $count[$this->_basic] = 0;
+        if (!isset($count[$this->_data])) {
+            $count[$this->_data] = 0;
         }
         
-        $count[$this->_basic] += 1;
+        $count[$this->_data] += 1;
     }
     
-    public function peek(array $count)
+    public function peek(array $counts)
     {
-        return $count[$this->_basic];
+        if (!isset($counts[$this->_data])) {
+            return 0;
+        }
+        
+        return $counts[$this->_data];
+    }
+    
+    public function removeFrom(array &$counts)
+    {
+        if (!isset($counts[$this->_data])) {
+            return;
+        }
+        
+        unset($counts[$this->_data]);
     }
     
     public function attach(array &$list)
@@ -79,7 +99,13 @@ class Word
             case self::TYPE_NAME_PART:
             case self::TYPE_SIZE_PART:
             case self::TYPE_MODEL_PART:
-                $list[$this->_type] .= " {$this->_original}"
+                $list[$this->_type] .= " {$this->_original}";
+                break;
+            case self::TYPE_COLOR:
+                $list[$this->_type][] = $this->_original;
+            default:
+                $list[$this->_type] = $this->_original;
+                break;
         }
     }
     
@@ -154,17 +180,10 @@ class Word
         return $this;
     }
     
-    protected static function clean($word)
-    {
-        $pocket = [];
-        preg_match('/\w+/ig', strtolower(trim($word)), $pocket); // TODO
-        return isset($pocket[0])? $pocket[0] : null;
-    }
-    
     protected static function check($word)
     {
         if ($word instanceof Word) {
-            return $word->_basic;
+            return $word->_data;
         } elseif (is_string($word)) {
             return $word;
         }
@@ -178,13 +197,13 @@ class Word
             return;
         }
         
-        if (static::hasArticle($this->_basic)) {
+        if (static::hasArticle($this->_data)) {
             $this->_type = self::TYPE_ARTICLE;
-        } elseif (static::hasNamePart($this->_basic)) {
+        } elseif (static::hasNamePart($this->_data)) {
             $this->_type = self::TYPE_NAME_PART;
-        } elseif (static::hasSizePart($this->_basic)) {
+        } elseif (static::hasSizePart($this->_data)) {
             $this->_type = self::TYPE_SIZE_PART;
-        } elseif (static::hasColor($this->_basic)) {
+        } elseif (static::hasColor($this->_data)) {
             $this->_type = self::TYPE_COLOR;
         }
     }

@@ -13,7 +13,7 @@ return [
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
         'urlManager' => [
-            'enablePrettyUrl' => false
+            'enablePrettyUrl' => true
         ],
         'user' => [
             'identityClass' => 'common\models\User',

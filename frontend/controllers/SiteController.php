@@ -29,7 +29,17 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $upload = new Upload;
+        $data = null;
+        
+        if (!empty($_FILES)) {
+            $data = $upload->parse();
+        } 
+        
+        return $this->render('upload', [
+            'upload' => $upload,
+            'data' => $data
+        ]);
     }
     
     /**
@@ -39,16 +49,6 @@ class SiteController extends Controller
      */
     public function actionUpload()
     {
-        $upload = new Upload;
-        $data = null;
         
-        if ($upload->load(Yii::$app->request->post('Upload'))) {
-            $data = $upload->parse();
-        }
-        
-        return $this->render('upload', [
-            'upload' => $upload,
-            'data' => $data
-        ]);
     }
 }

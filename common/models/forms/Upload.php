@@ -2,33 +2,20 @@
 
 namespace common\models\forms;
 
-use common\extensions\Parser;
+use SimpleFile;
+use common\extensions\parser\Parser;
 
-/**
- * This is the model class for table "product".
- *
- * @property integer $id
- * @property string $section
- * @property string $subsection
- * @property string $article
- * @property string $brand
- * @property string $model
- * @property string $name
- * @property string $size
- * @property string $color
- * @property string $orientation
- */
 class Upload extends \yii\db\ActiveRecord
 {
+    public $products;
+    
     /**
      * @inheritdoc
      */
     public function rules()
     {
         return [
-            [['section', 'subsection', 'brand', 'model', 'name'], 'required'],
-            [['orientation'], 'string'],
-            [['section', 'subsection', 'article', 'brand', 'model', 'name', 'size', 'color'], 'string', 'max' => 255]
+            [['products'], 'file']
         ];
     }
 
@@ -38,28 +25,19 @@ class Upload extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'section' => 'Section',
-            'subsection' => 'Subsection',
-            'article' => 'Article',
-            'brand' => 'Brand',
-            'model' => 'Model',
-            'name' => 'Name',
-            'size' => 'Size',
-            'color' => 'Color',
-            'orientation' => 'Orientation',
+            'products' => 'Products',
         ];
     }
     
     public function parse()
     {
-        $file = $_FILES['Upload']['products'];
+        $files = SimpleFile::disassemble($_FILES);
         
-        if ($file === null || $file['error'] != UPLOAD_ERR_OK
-                || !is_uploaded_file($file['tmp_name'])) {
+        if (empty($files) || $files[0]->error != UPLOAD_ERR_OK
+                || !is_uploaded_file($files[0]->tmpName)) {
             return;
         }
         
-        return Parser::load(file_get_contents($file['tmp_name']))->run();
+        return Parser::load(file_get_contents($files[0]->tmpName))->run();
     }
 }

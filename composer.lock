@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "8580bd82955b1fbb80d47024e184056e",
-    "content-hash": "e1929a97e872bdbaacc8530468eccb67",
+    "hash": "30a57687cbd576ded15d655548d44ab2",
+    "content-hash": "fb64e4d53825d8b1614b1ed3da3ab11c",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
@@ -687,6 +687,44 @@
             "time": "2015-05-29 06:29:14"
         },
         {
+            "name": "lodin/simple-file",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Lodin/SimpleFile.git",
+                "reference": "020b3055033991bad8ae45d5177c637dafd16538"
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "SimpleFile": "src/"
+                }
+            },
+            "license": [
+                "BSL-1.0"
+            ],
+            "authors": [
+                {
+                    "name": "Vlad Rindevich",
+                    "email": "rindevich.vs@gmail.com",
+                    "homepage": "https://github.com/Lodin"
+                }
+            ],
+            "description": "Parses $_FILES array to objects list",
+            "homepage": "https://github.com/Lodin/SimpleFile",
+            "keywords": [
+                "file"
+            ],
+            "support": {
+                "issues": "https://github.com/Lodin/SimpleFile/issues",
+                "source": "https://github.com/Lodin/SimpleFile"
+            },
+            "time": "2015-07-03 06:44:39"
+        },
+        {
             "name": "phpspec/php-diff",
             "version": "v1.0.2",
             "source": {
@@ -915,7 +953,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "lodin/simple-file": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

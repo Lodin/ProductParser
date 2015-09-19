@@ -1,5 +1,7 @@
 <?php
 
+namespace common\extensions\parser;
+
 use common\models\db\Product;
 
 class Line
@@ -15,19 +17,23 @@ class Line
         $line = new Line;
         
         $line->_original = $data;
-        foreach ($line->split($data) as $word) {
-            if ($line->hasMultipleColors($word)) {
-                $line->handleMultipleColors($word);
+        foreach ($line->split($data) as $wordStr) {
+            if (empty($wordStr) || Word::hasJunk($wordStr)) {
                 continue;
             }
             
-            if ($this->isStick($word)) {
-                $this->_isStick = true;
+            if ($line->hasMultipleColors($wordStr)) {
+                $line->handleMultipleColors($wordStr);
+                continue;
             }
             
-            $word = Word::from($word);
+            if ($line->isStick($wordStr)) {
+                $line->_isStick = true;
+            }
             
-            if ($this->_isStick && Word::hasStickOrientation($word)) {
+            $word = Word::from($wordStr);
+            
+            if ($line->_isStick && Word::hasStickOrientation($word)) {
                 $word->asStickOrientation();
             }
         
@@ -37,7 +43,7 @@ class Line
         return $line;
     }
     
-    public function consider(array $counts)
+    public function consider(array &$counts)
     {
         $buffer = null;
         
@@ -53,9 +59,12 @@ class Line
             
             list($buffer, $previous) = $this->compare($buffer, $word, $counts);
             $previous->asModelPart();
+            $previous->removeFrom($counts);
         }
         
         $buffer->asBrand();
+        
+        return $this;
     }
     
     public function apply(Product $product)
@@ -73,6 +82,8 @@ class Line
         foreach ($this->_words as $word) {
             $word->attach($list);
         }
+        
+        return $list;
     }
     
     public function count()

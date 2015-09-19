@@ -1,5 +1,7 @@
 <?php
 
+namespace common\extensions\parser;
+
 use common\models\db\Product;
 
 class Parser
@@ -13,8 +15,12 @@ class Parser
     {
         $parser = new static;
         
-        foreach (explode('\n', $data) as $line) {
-            $this->_lines[] = Line::from($line);
+        foreach (explode("\n", $data) as $line) {
+            if (empty($line)) {
+                continue;
+            }
+            
+            $parser->_lines[] = Line::from($line);
         }
         
         return $parser;
@@ -23,6 +29,16 @@ class Parser
     public function run()
     {
         $result = [];
+        
+        $this->count();
+        
+        foreach ($this->_lines as $line) {
+            $result[] = $line
+                ->consider($this->_counts)
+                ->apply(new Product);
+        }
+        print_r($this->_lines);
+        die();
         
         return $result;
     }
@@ -33,19 +49,6 @@ class Parser
         foreach ($this->_lines as $line) {
             $this->useCount($line->count());
         }
-    }
-    
-    protected function result()
-    {
-        $result = [];
-        
-        foreach ($this->_lines as $line) {
-            $result[] = $line
-                ->consider($this->_counts)
-                ->apply(new Product);
-        }
-        
-        return $result;
     }
     
     protected function useCount(array $count)
