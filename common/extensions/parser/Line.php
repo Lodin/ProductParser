@@ -15,9 +15,15 @@ class Line
     public static function from($data)
     {
         $line = new Line;
-        
         $line->_original = $data;
+        
+        $isPassedDelimiter = false;
         foreach ($line->split($data) as $wordStr) {
+            if (Word::hasDelimiter($wordStr)) {
+                $isPassedDelimiter = true;
+                continue;
+            }
+            
             if (empty($wordStr) || Word::hasJunk($wordStr)) {
                 continue;
             }
@@ -33,6 +39,10 @@ class Line
             
             $word = Word::from($wordStr);
             
+            if ($isPassedDelimiter) {
+                $word->asAfterDelimiter();
+            }
+            
             if ($line->_isStick && Word::hasStickOrientation($word)) {
                 $word->asStickOrientation();
             }
@@ -43,64 +53,68 @@ class Line
         return $line;
     }
     
-    public function consider(array &$counts)
+    public function consider(Counter &$counter)
     {
-        $buffer = null;
+        $bufWord = null;
+        $bufData = null;
         
-        foreach ($this->_words as $word) {
-            if ($word->isEmpty()) {
-                continue;
+        $this->each(function(Word $word, $data) use($counter, &$bufWord, &$bufData) {
+            if (!$counter->validate($word)) {
+                return;
             }
             
-            if ($buffer === null) {
-                $buffer = $word;
-                continue;
+            if ($bufWord === null) {
+                $bufWord = $word;
+                $bufData = $data;
+                return;
             }
             
-            list($buffer, $previous) = $this->compare($buffer, $word, $counts);
-            $previous->asModelPart();
-            $previous->removeFrom($counts);
+            if ($counter->greater($data, $bufData)) {
+                if ($counter->isBrand()) {
+                    $bufWord->asModelPart();
+                } else {
+                    
+                }
+                
+                $counter->remove($bufData);
+                $bufWord = $word;
+                $bufData = $data;
+            } else {
+                if ($counter->isBrand()) {
+                    $word->asModelPart();
+                } else {
+                    
+                }
+                
+                $counter->remove($data);
+            }
+        });
+        
+        if ($bufWord !== null) {
+            if ($counter->isBrand()) {
+                $bufWord->asBrand();
+            } else {
+                
+            }
         }
-        
-        $buffer->asBrand();
         
         return $this;
     }
     
     public function apply(Product $product)
     {
-        $list = [
-            Word::TYPE_ARTICLE => '',
-            Word::TYPE_NAME_PART => '',
-            Word::TYPE_SIZE_PART => '',
-            Word::TYPE_MODEL_PART => '',
-            Word::TYPE_BRAND => '',
-            Word::TYPE_COLOR => '',
-            Word::TYPE_STICK_ORIENTATION => ''
-        ];
-        
         foreach ($this->_words as $word) {
-            $word->attach($list);
+            $word->attach($product);
         }
         
-        return $list;
+        return $product;
     }
     
-    public function count()
+    public function each(callable $callback)
     {
-        $count = [];
-        
         foreach ($this->_words as $word) {
-            if ($word->isEmpty()) {
-                continue;
-            }
-            
-            if ($word->isUnknownPart()) {
-                $word->countUp($count);
-            }
+            $word->call($callback);
         }
-        
-        return $count;
     }
     
     protected function compare(Word $first, Word $second, array $counts)
@@ -114,10 +128,10 @@ class Line
     
     protected function hasMultipleColors($str)
     {
-        return strpos($str, '\\') !== false && Word::hasColor($str);
+        return strpos($str, '/') !== false && Word::hasColor($str);
     }
     
-    protected function handleMultupleColors($str)
+    protected function handleMultipleColors($str)
     {
         foreach ($this->splitColors($str) as $word) {
             $this->_words[] = Word::from($word)->asColor();
@@ -131,7 +145,7 @@ class Line
     
     protected function splitColors($str)
     {
-        return explode('\\', $str);
+        return explode('/', $str);
     }
     
     protected function isStick($word)

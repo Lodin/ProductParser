@@ -3,13 +3,19 @@
 namespace common\extensions\parser;
 
 use common\models\db\Product;
+use common\extensions\parser\Counter;
 
 class Parser
 {
     protected $_lines;
-    protected $_counts;
+    protected $_brandCounter;
+    protected $_categoryCounter;
     
-    protected function __construct() {}
+    protected function __construct()
+    {
+        $this->_brandCounter = Counter::brand();
+        $this->_categoryCounter = Counter::category();
+    }
     
     public static function load($data)
     {
@@ -30,35 +36,24 @@ class Parser
     {
         $result = [];
         
-        $this->count();
+        $this->each(function($line){
+            $this->_brandCounter->count($line);
+            $this->_categoryCounter->count($line);
+        });
         
-        foreach ($this->_lines as $line) {
+        $this->each(function($line) use(&$result){
             $result[] = $line
-                ->consider($this->_counts)
+                ->consider($this->_brandCounter)
                 ->apply(new Product);
-        }
-        print_r($this->_lines);
-        die();
+        });
         
         return $result;
     }
     
-    
-    protected function count()
+    protected function each(callable $callback)
     {
-        foreach ($this->_lines as $line) {
-            $this->useCount($line->count());
-        }
-    }
-    
-    protected function useCount(array $count)
-    {
-        foreach ($count as $word => $quantity) {
-            if (!isset($this->_counts[$word])) {
-                $this->_counts[$word] = 0;
-            }
-            
-            $this->_counts[$word] += $quantity;
+        foreach ($this->_lines as &$line) {
+            $callback($line);
         }
     }
 }
