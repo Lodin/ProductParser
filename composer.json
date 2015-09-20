@@ -24,6 +24,7 @@
         "yiisoft/yii2-debug": "*",
         "yiisoft/yii2-gii": "*",
         "yiisoft/yii2-faker": "*",
+        "Umisoft/phpmorphy": "*",
         "lodin/simple-file": "dev-master"
     },
     "repositories": [

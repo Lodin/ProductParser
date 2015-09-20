@@ -3,8 +3,6 @@
 namespace common\models\db;
 
 use Yii;
-use common\extensions\parser\Word;
-use common\models\db\Color;
 
 /**
  * This is the model class for table "product".
@@ -17,12 +15,14 @@ use common\models\db\Color;
  * @property string $model
  * @property string $name
  * @property string $orientation
+ * @property string $size
  *
  * @property Color[] $colors
- * @property Size[] $sizes
  */
 class Product extends \yii\db\ActiveRecord
 {
+    public $colorlist;
+    
     /**
      * @inheritdoc
      */
@@ -39,7 +39,7 @@ class Product extends \yii\db\ActiveRecord
         return [
             [['section', 'subsection', 'brand', 'model', 'name'], 'required'],
             [['orientation'], 'string'],
-            [['section', 'subsection', 'article', 'brand', 'model', 'name'], 'string', 'max' => 255]
+            [['section', 'subsection', 'article', 'brand', 'model', 'name', 'size'], 'string', 'max' => 255]
         ];
     }
 
@@ -49,14 +49,15 @@ class Product extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'section' => 'Section',
-            'subsection' => 'Subsection',
-            'article' => 'Article',
-            'brand' => 'Brand',
-            'model' => 'Model',
-            'name' => 'Name',
-            'orientation' => 'Orientation',
+            'id' => Yii::t('app', 'ID'),
+            'section' => Yii::t('app', 'Section'),
+            'subsection' => Yii::t('app', 'Subsection'),
+            'article' => Yii::t('app', 'Article'),
+            'brand' => Yii::t('app', 'Brand'),
+            'model' => Yii::t('app', 'Model'),
+            'name' => Yii::t('app', 'Name'),
+            'orientation' => Yii::t('app', 'Orientation'),
+            'size' => Yii::t('app', 'Size'),
         ];
     }
 
@@ -66,22 +67,5 @@ class Product extends \yii\db\ActiveRecord
     public function getColors()
     {
         return $this->hasMany(Color::className(), ['product_id' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getSizes()
-    {
-        return $this->hasMany(Size::className(), ['product_id' => 'id']);
-    }
-    
-    public function from(array $list)
-    {
-        $this->article = $list[Word::TYPE_ARTICLE];
-        $this->brand = $list[Word::TYPE_BRAND];
-        $this->model = $list[Word::TYPE_NAME_PART];
-        $this->name = $list[Word::TYPE_NAME_PART];
-        $this->orientation = $list[Word::TYPE_STICK_ORIENTATION];
     }
 }

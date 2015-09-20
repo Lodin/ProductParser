@@ -29,6 +29,16 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
+        return $this->render('index');
+    }
+    
+    /**
+     * Displays page for uploading csv-file with product list
+     * 
+     * @return mixed`
+     */
+    public function actionUpload()
+    {
         $upload = new Upload;
         $data = null;
         
@@ -40,15 +50,5 @@ class SiteController extends Controller
             'upload' => $upload,
             'data' => $data
         ]);
-    }
-    
-    /**
-     * Displays page for uploading csv-file with product list
-     * 
-     * @return mixed`
-     */
-    public function actionUpload()
-    {
-        
     }
 }

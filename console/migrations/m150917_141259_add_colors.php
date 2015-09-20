@@ -1,5 +1,6 @@
 <?php
 
+use common\models\db\Color;
 use yii\db\Migration;
 
 class m150917_141259_add_colors extends Migration
@@ -16,7 +17,15 @@ class m150917_141259_add_colors extends Migration
         $this->createTable('{{%color}}', [
             'id' => $this->primaryKey(),
             'product_id' => $this->integer()->notNull(),
-            'color' => $this->string()->notNull()
+            'name' => $this->enum([
+                Color::RED,
+                Color::BLACK,
+                Color::WHITE,
+                Color::GOLD,
+                Color::BLUE,
+                Color::YELLOW,
+                Color::DARK_BLUE
+            ])->notNull()
         ], $tableOptions);
         
         $this->dropColumn('{{%product}}', 'color');
@@ -28,6 +37,6 @@ class m150917_141259_add_colors extends Migration
     {
         $this->dropForeignKey('color_product', '{{%color}}');
         $this->dropTable('{{%color}}');
-        $this->addColumn('{{%product}}', 'color', $this->string());
+        $this->addColumn('{{%product}}', 'name', $this->string());
     }
 }
