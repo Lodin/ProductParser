@@ -43,7 +43,8 @@ class Line
                 $word->asAfterDelimiter();
             }
             
-            if ($line->_isStick && Word::hasStickOrientation($word)) {
+            if ($line->_isStick && $isPassedDelimiter
+                    && Word::hasStickOrientation($word)) {
                 $word->asStickOrientation();
             }
         
@@ -72,8 +73,6 @@ class Line
             if ($counter->greater($data, $bufData)) {
                 if ($counter->isBrand()) {
                     $bufWord->asModelPart();
-                } else {
-                    
                 }
                 
                 $counter->remove($bufData);
@@ -82,8 +81,6 @@ class Line
             } else {
                 if ($counter->isBrand()) {
                     $word->asModelPart();
-                } else {
-                    
                 }
                 
                 $counter->remove($data);
@@ -94,7 +91,7 @@ class Line
             if ($counter->isBrand()) {
                 $bufWord->asBrand();
             } else {
-                
+                $bufWord->asSubsection();
             }
         }
         
@@ -150,6 +147,6 @@ class Line
     
     protected function isStick($word)
     {
-        return (bool)preg_match('/клюшк/i', $word);
+        return mb_strpos(mb_strtolower($word), 'клюшк') !== false;
     }
 }

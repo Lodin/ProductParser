@@ -40,15 +40,22 @@ class SiteController extends Controller
     public function actionUpload()
     {
         $upload = new Upload;
-        $data = null;
         
         if (!empty($_FILES)) {
-            $data = $upload->parse();
-        } 
+            $products = $upload->parse();
+            
+            foreach ($products as $product) {
+                $product->setSection();
+                if (!$product->upload()) {
+                    print_r($product->getErrors()); echo PHP_EOL;
+                    print_r($product);
+                    die();
+                }
+            }
+        }
         
         return $this->render('upload', [
-            'upload' => $upload,
-            'data' => $data
+            'upload' => $upload
         ]);
     }
 }

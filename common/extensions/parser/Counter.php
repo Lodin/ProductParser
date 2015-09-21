@@ -4,6 +4,7 @@ namespace common\extensions\parser;
 
 use common\extensions\parser\Word;
 use common\extensions\parser\Line;
+use common\extensions\parser\WordTester;
 
 class Counter
 {
@@ -12,6 +13,7 @@ class Counter
     
     public $_list;
     protected $_type;
+    public $_tester;
     
     public static function brand()
     {
@@ -25,6 +27,12 @@ class Counter
         $counter = new Counter();
         $counter->_type = self::TYPE_CATEGORY;
         return $counter;
+    }
+    
+    public function useTester(WordTester $tester)
+    {
+        $this->_tester = $tester;
+        return $this;
     }
     
     public function isBrand()
@@ -43,12 +51,12 @@ class Counter
             if (!$this->validate($word)) {
                 return;
             }
-
-            if (!isset($this->_list[$data])) {
-                $this->_list[$data] = 0;
+            
+            if ($this->isCategory()) {
+                $this->nounCount($data); 
+            } else {
+                $this->simpleCount($data);
             }
-
-            $this->_list[$data] += 1;
         });
     }
     
@@ -81,4 +89,22 @@ class Counter
     }
     
     protected function __construct() {}
+    
+    protected function simpleCount($data)
+    {
+        if (!isset($this->_list[$data])) {
+            $this->_list[$data] = 0;
+        }
+
+        $this->_list[$data] += 1;
+    }
+    
+    protected function nounCount($data)
+    {
+        if (!$this->_tester->testNoun($data)) {
+            return;
+        }
+        
+        $this->simpleCount($data);
+    }
 }

@@ -14,7 +14,8 @@ class Parser
     protected function __construct()
     {
         $this->_brandCounter = Counter::brand();
-        $this->_categoryCounter = Counter::category();
+        $this->_categoryCounter = Counter::category()
+            ->useTester(WordTester::create());
     }
     
     public static function load($data)
@@ -44,6 +45,7 @@ class Parser
         $this->each(function($line) use(&$result){
             $result[] = $line
                 ->consider($this->_brandCounter)
+                ->consider($this->_categoryCounter)
                 ->apply(new Product);
         });
         

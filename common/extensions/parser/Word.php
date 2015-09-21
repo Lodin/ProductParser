@@ -14,6 +14,7 @@ class Word
     const TYPE_BRAND = 4;
     const TYPE_COLOR = 5;
     const TYPE_STICK_ORIENTATION = 6;
+    const TYPE_SUBSECTION = 7;
     
     protected $_data;
     protected $_original;
@@ -27,7 +28,7 @@ class Word
     {
         $word = new static;
         
-        $word->_data = trim(strtolower($data));
+        $word->_data = trim(mb_strtolower($data));
         $word->_original = trim($data);
         
         $word->test();
@@ -69,12 +70,12 @@ class Word
     
     public static function hasStickOrientation($word)
     {
-        return preg_match('/l|r/i', static::inner($word));
+        return preg_match('/\b(?:l|r)\b/i', static::inner($word));
     }
     
     public function call(callable $callback)
     {
-        $callback($this, $this->_data);
+        return $callback($this, $this->_data);
     }
     
     public function attach(Product &$product)
@@ -84,21 +85,34 @@ class Word
                 $product->article = $this->_original;
                 break;
             case self::TYPE_NAME_PART:
-                $product->name .= " {$this->_original}";
+                $this->chain($product, 'name');
+                $product->name .= $this->_original;
                 break;
             case self::TYPE_SIZE_PART:
-                $product->size .= " {$this->_original}";
+                $this->chain($product, 'size');
+                $product->size .= $this->_original;
                 break;
             case self::TYPE_MODEL_PART:
-                $product->model .= " {$this->_original}";
+                $this->chain($product, 'model');
+                $product->model .= $this->_original;
+                
+                $this->chain($product, 'name');
+                $product->name .= $this->_original;
                 break;
             case self::TYPE_BRAND:
+                $this->chain($product, 'name');
+                $product->name .= $this->_original;
                 $product->brand = $this->_original;
                 break;
             case self::TYPE_COLOR:
                 $color = new Color();
                 $color->parse($this->_original);
-                $product->colorlist[] = $color;
+                $product->addColor($color);
+                break;
+            case self::TYPE_SUBSECTION:
+                $this->chain($product, 'name');
+                $product->name .= $this->_original;
+                $product->subsection = mb_convert_case($this->_original, MB_CASE_TITLE);
                 break;
             case self::TYPE_STICK_ORIENTATION:
                 $product->orientation = $this->_data;
@@ -155,6 +169,11 @@ class Word
         return $this->_type === self::TYPE_STICK_ORIENTATION;
     }
     
+    public function isSubsection()
+    {
+        return $this->_type === self::TYPE_SUBSECTION;
+    }
+    
     public function asStickOrientation()
     {
         $this->_type = self::TYPE_STICK_ORIENTATION;
@@ -176,6 +195,12 @@ class Word
     public function asModelPart()
     {
         $this->_type = self::TYPE_MODEL_PART;
+        return $this;
+    }
+    
+    public function asSubsection()
+    {
+        $this->_type = self::TYPE_SUBSECTION;
         return $this;
     }
     
@@ -218,5 +243,12 @@ class Word
         } elseif (static::hasSizePart($this->_data, $this->isAfterDelimiter())) {
             $this->_type = self::TYPE_SIZE_PART;
         } 
+    }
+    
+    protected function chain($model, $attribute)
+    {
+        if (!empty($model->$attribute)) {
+            $model->$attribute .= ' ';
+        }
     }
 }

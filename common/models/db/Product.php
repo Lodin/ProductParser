@@ -21,7 +21,7 @@ use Yii;
  */
 class Product extends \yii\db\ActiveRecord
 {
-    public $colorlist;
+    protected $colorList = [];
     
     /**
      * @inheritdoc
@@ -37,7 +37,7 @@ class Product extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['section', 'subsection', 'brand', 'model', 'name'], 'required'],
+            [['section', 'name'], 'required'],
             [['orientation'], 'string'],
             [['section', 'subsection', 'article', 'brand', 'model', 'name', 'size'], 'string', 'max' => 255]
         ];
@@ -67,5 +67,32 @@ class Product extends \yii\db\ActiveRecord
     public function getColors()
     {
         return $this->hasMany(Color::className(), ['product_id' => 'id']);
+    }
+    
+    public function upload()
+    {
+        if (!$this->validate()) {
+            return false;
+        }
+        
+        $this->save();
+        
+        $transaction = Yii::$app->db->beginTransaction();
+        foreach ($this->colorList as $color) {
+            $color->save();
+        }
+        $transaction->commit();
+        
+        return true;
+    }
+    
+    public function addColor(Color $color)
+    {
+        $this->colorList[] = $color;
+    }
+    
+    public function setSection()
+    {
+        $this->section = 'Хоккей';
     }
 }
