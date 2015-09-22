@@ -9,7 +9,7 @@ use Yii;
  *
  * @property integer $id
  * @property integer $product_id
- * @property string $size
+ * @property string $name
  *
  * @property Product $product
  */
@@ -29,9 +29,9 @@ class Size extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['product_id', 'size'], 'required'],
+            [['product_id', 'name'], 'required'],
             [['product_id'], 'integer'],
-            [['size'], 'string', 'max' => 255]
+            [['name'], 'string', 'max' => 255]
         ];
     }
 
@@ -41,9 +41,9 @@ class Size extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'product_id' => 'Product ID',
-            'size' => 'Size',
+            'id' => Yii::t('app', 'ID'),
+            'product_id' => Yii::t('app', 'Product ID'),
+            'name' => Yii::t('app', 'Name'),
         ];
     }
 

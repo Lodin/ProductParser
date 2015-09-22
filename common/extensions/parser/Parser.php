@@ -2,9 +2,13 @@
 
 namespace common\extensions\parser;
 
+use Closure;
 use common\models\db\Product;
 use common\extensions\parser\Counter;
 
+/**
+ * Main parser class
+ */
 class Parser
 {
     protected $_lines;
@@ -18,6 +22,12 @@ class Parser
             ->useTester(WordTester::create());
     }
     
+    /**
+     * Creates new parser instance and parses received data.
+     * 
+     * @param string $data product list
+     * @return \common\extensions\parser\Parser
+     */
     public static function load($data)
     {
         $parser = new static;
@@ -33,6 +43,11 @@ class Parser
         return $parser;
     }
     
+    /**
+     * Starts word sorting and applying parsing result to product models.
+     * 
+     * @return Product[] resulting product list
+     */
     public function run()
     {
         $result = [];
@@ -52,7 +67,12 @@ class Parser
         return $result;
     }
     
-    protected function each(callable $callback)
+    /**
+     * Iterates line list.
+     * 
+     * @param \Closure $callback rule applying to each line
+     */
+    protected function each(Closure $callback)
     {
         foreach ($this->_lines as &$line) {
             $callback($line);

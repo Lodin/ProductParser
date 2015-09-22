@@ -24,6 +24,9 @@ class m150917_141259_add_colors extends Migration
                 Color::GOLD,
                 Color::BLUE,
                 Color::YELLOW,
+                Color::GREEN,
+                Color::GRAY,
+                Color::ORANGE,
                 Color::DARK_BLUE
             ])->notNull()
         ], $tableOptions);
@@ -37,6 +40,6 @@ class m150917_141259_add_colors extends Migration
     {
         $this->dropForeignKey('color_product', '{{%color}}');
         $this->dropTable('{{%color}}');
-        $this->addColumn('{{%product}}', 'name', $this->string());
+        $this->addColumn('{{%product}}', 'color', $this->string());
     }
 }

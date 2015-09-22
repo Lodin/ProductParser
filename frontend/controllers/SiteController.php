@@ -2,8 +2,10 @@
 namespace frontend\controllers;
 
 use Yii;
-use yii\web\Controller;
 use common\models\forms\Upload;
+use common\models\db\Product;
+use yii\web\Controller;
+use yii\data\ActiveDataProvider;
 
 /**
  * Site controller
@@ -29,7 +31,18 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $provider = new ActiveDataProvider([
+            'query' => Product::find()
+                ->joinWith('colors')
+                ->joinWith('sizes')
+        ]);
+        
+        return $this->render('index', [
+            'provider' => $provider,
+            'pagination' => [
+                'pageSize' => 40,
+            ],
+        ]);
     }
     
     /**

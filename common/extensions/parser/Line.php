@@ -2,16 +2,26 @@
 
 namespace common\extensions\parser;
 
+use Closure;
 use common\models\db\Product;
 
+/**
+ * Wrapper above product name line inteded for distributing words to product
+ * model fields.
+ */
 class Line
 {
     protected $_original = '';
     protected $_words = [];
     protected $_isStick = false;
     
-    protected function __construct() {}
-    
+    /**
+     * Receives product name, parses it to words and creates new instance of
+     * Line.
+     * 
+     * @param string $data unparsed product name
+     * @return \common\extensions\parser\Line
+     */
     public static function from($data)
     {
         $line = new Line;
@@ -43,6 +53,10 @@ class Line
                 $word->asAfterDelimiter();
             }
             
+            $word
+                ->test()
+                ->clean();
+            
             if ($line->_isStick && $isPassedDelimiter
                     && Word::hasStickOrientation($word)) {
                 $word->asStickOrientation();
@@ -54,6 +68,12 @@ class Line
         return $line;
     }
     
+    /**
+     * Applies counter data to included words.
+     * 
+     * @param \common\extensions\parser\Counter $counter
+     * @return \common\extensions\parser\Line
+     */
     public function consider(Counter &$counter)
     {
         $bufWord = null;
@@ -71,33 +91,31 @@ class Line
             }
             
             if ($counter->greater($data, $bufData)) {
-                if ($counter->isBrand()) {
-                    $bufWord->asModelPart();
-                }
-                
+                $counter->throwOut($bufWord);
+
                 $counter->remove($bufData);
                 $bufWord = $word;
                 $bufData = $data;
             } else {
-                if ($counter->isBrand()) {
-                    $word->asModelPart();
-                }
+                $counter->throwOut($word);
                 
                 $counter->remove($data);
             }
         });
         
         if ($bufWord !== null) {
-            if ($counter->isBrand()) {
-                $bufWord->asBrand();
-            } else {
-                $bufWord->asSubsection();
-            }
+            $counter->accept($bufWord);
         }
         
         return $this;
     }
     
+    /**
+     * Writes words data to product model.
+     * 
+     * @param Product $product
+     * @return Product
+     */
     public function apply(Product $product)
     {
         foreach ($this->_words as $word) {
@@ -107,27 +125,36 @@ class Line
         return $product;
     }
     
-    public function each(callable $callback)
+    /**
+     * Iterates word list.
+     * 
+     * @param Closure $callback rule applying to each word
+     */
+    public function each(Closure $callback)
     {
         foreach ($this->_words as $word) {
             $word->call($callback);
         }
     }
     
-    protected function compare(Word $first, Word $second, array $counts)
-    {
-        if ($first->peek($counts) < $second->peek($counts)) {
-            return [$second, $first];
-        } else {
-            return [$first, $second];
-        }
-    }
+    protected function __construct() {}
     
+    /**
+     * Searches for multiple colors inside the string.
+     * 
+     * @param string $str
+     * @return boolean
+     */
     protected function hasMultipleColors($str)
     {
-        return strpos($str, '/') !== false && Word::hasColor($str);
+        return mb_strpos($str, '/') !== false && Word::hasColor($str);
     }
     
+    /**
+     * Accumulates multiple colors found inside the string to word list.
+     * 
+     * @param string $str
+     */
     protected function handleMultipleColors($str)
     {
         foreach ($this->splitColors($str) as $word) {
@@ -135,16 +162,35 @@ class Line
         }
     }
     
+    /**
+     * Splits product name to words by space symbol.
+     * 
+     * @param string $str
+     * @return string[]
+     */
     protected function split($str)
     {
         return explode(' ', $str);
     }
     
+    /**
+     * Splits multiple color string to words by color delimiter symbol `/`.
+     * 
+     * @param string $str
+     * @return string[]
+     */
     protected function splitColors($str)
     {
         return explode('/', $str);
     }
     
+    /**
+     * Determines if the word points the possibility of stick orientation
+     * existion inside the whole line.
+     * 
+     * @param type $word
+     * @return type
+     */
     protected function isStick($word)
     {
         return mb_strpos(mb_strtolower($word), 'клюшк') !== false;

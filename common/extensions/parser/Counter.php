@@ -6,15 +6,24 @@ use common\extensions\parser\Word;
 use common\extensions\parser\Line;
 use common\extensions\parser\WordTester;
 
+/**
+ * Incapsulates counting logic intended for intelligence imitation. It is need
+ * to find brands and subsections.
+ */
 class Counter
 {
     const TYPE_BRAND = 0;
     const TYPE_CATEGORY = 1;
     
-    public $_list;
+    protected $_list;
     protected $_type;
-    public $_tester;
+    protected $_tester;
     
+    /**
+     * Creates new Counter instance with `brand` type.
+     * 
+     * @return \common\extensions\parser\Counter
+     */
     public static function brand()
     {
         $counter = new Counter();
@@ -22,6 +31,11 @@ class Counter
         return $counter;
     }
     
+    /**
+     * Creates new Counter instance with `category` type.
+     * 
+     * @return \common\extensions\parser\Counter
+     */
     public static function category()
     {
         $counter = new Counter();
@@ -29,22 +43,43 @@ class Counter
         return $counter;
     }
     
+    /**
+     * Sets the WordTester that counter will use.
+     * 
+     * @param WordTester $tester
+     * @return \common\extensions\parser\Counter
+     */
     public function useTester(WordTester $tester)
     {
         $this->_tester = $tester;
         return $this;
     }
     
+    /**
+     * Answers if the counter has `brand` type.
+     * 
+     * @return boolean
+     */
     public function isBrand()
     {
         return $this->_type === self::TYPE_BRAND;
     }
     
+    /**
+     * Answers if the counter has `category` type.
+     * 
+     * @return boolean
+     */
     public function isCategory()
     {
         return $this->_type === self::TYPE_CATEGORY;
     }
     
+    /**
+     * Counts word in single line.
+     * 
+     * @param Line $line
+     */
     public function count(Line $line)
     {
         $line->each(function(Word $word, $data) {
@@ -60,6 +95,39 @@ class Counter
         });
     }
     
+    /**
+     * Defines word type if it is not determined as brand or category.
+     * 
+     * @param Word $word
+     */
+    public function throwOut(Word $word)
+    {
+        if ($this->isBrand()) {
+            $word->asModelPart();
+        }
+    }
+    
+    /**
+     * Defines word type if it is determined as brand or category. 
+     * 
+     * @param Word $word
+     */
+    public function accept(Word $word)
+    {
+        if ($this->isBrand()) {
+            $word->asBrand();
+        } else {
+            $word->asSubsection();
+        }
+    }
+    
+    /**
+     * Returns if the first word has bigger count than second.
+     * 
+     * @param string $first first word to compare
+     * @param string $second second word to compare
+     * @return boolean
+     */
     public function greater($first, $second)
     {
         if (!isset($this->_list[$first])) {
@@ -73,6 +141,11 @@ class Counter
         return $this->_list[$first] > $this->_list[$second];
     }
     
+    /**
+     * Removes word from counter list if it was throwed out.
+     * 
+     * @param string $word
+     */
     public function remove($word)
     {
         if (!isset($this->_list[$word])) {
@@ -82,6 +155,12 @@ class Counter
         unset($this->_list[$word]);
     }
     
+    /**
+     * Validates word to have right type depending on counter type.
+     * 
+     * @param Word $word
+     * @return boolean
+     */
     public function validate(Word $word)
     {
         return ($this->isBrand() && $word->isUnknownPart()) ||
@@ -90,6 +169,11 @@ class Counter
     
     protected function __construct() {}
     
+    /**
+     * Simply counts word.
+     * 
+     * @param string $data
+     */
     protected function simpleCount($data)
     {
         if (!isset($this->_list[$data])) {
@@ -99,6 +183,11 @@ class Counter
         $this->_list[$data] += 1;
     }
     
+    /**
+     * Counts word only if it is a noun.
+     * 
+     * @param string $data
+     */
     protected function nounCount($data)
     {
         if (!$this->_tester->testNoun($data)) {
